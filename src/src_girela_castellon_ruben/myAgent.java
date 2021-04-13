@@ -66,6 +66,8 @@ public class myAgent extends AbstractPlayer{
 		//created the vector of open and closed nodes
 		Vector<Vector2d> abiertos = new Vector<Vector2d>();
 		Vector<Vector2d> cerrados = new Vector<Vector2d>();
+		Vector2d best_node = new Vector2d();
+		Integer g = 0;
 		
 		//end of algorithm stop
 		boolean stop = false;
@@ -78,7 +80,12 @@ public class myAgent extends AbstractPlayer{
 		abiertos.add(avatar);
 		
 		do {
+			//save the best node
+			best_node = bestNode(abiertos, g);
 			
+			if(best_node == portal) {
+				
+			}
 		}while(!stop);
 	}
 	
@@ -86,9 +93,84 @@ public class myAgent extends AbstractPlayer{
 	 * Obtiene el mejor nodo
 	 * @param abiertos vector of non-transversed nodes
 	 */
-	public Vector2d bestNode(Vector<Vector2d> abiertos) {
-		Vector2d best_node;
+	public Vector2d bestNode(Vector<Vector2d> abiertos, Integer g) {
+		//save the best node
+		Vector2d best_node = new Vector2d();
+		//save the value h, f and the minimum f
+		Integer h=0, f=0, min_f = 9999999;
 		
+		//traverse all open nodes
+		for(Vector2d nodo:abiertos) {
+			//calculate heuristic distance
+			h = calculateManhattan(nodo,0);
+			//and calculate the total distance
+			f = g + h;
+			//save the node with the smallest distance
+			if(f < min_f) {
+				f = min_f;
+				best_node = nodo;
+			}
+		}
+		//return the best node
 		return best_node;
+	}
+	/**
+	 * gets the Manhattan distance
+	 * @param current_node current node to calculate distance h 
+	 */
+	public Integer calculateManhattan(Vector2d current_node, Integer orientacion){
+		//Manhattan distance
+        Integer distance = 0;
+        /*switch(orientacion) {
+        case 0://up
+        	distance = ((int) (Math.abs(current_node.x - portal.x) + Math.abs(current_node.y-portal.y)));
+        	break;
+        case 1://down
+        	distance = ((int) (Math.abs(current_node.x - portal.x) + Math.abs(current_node.y-portal.y)));
+        	break;
+        case 2://left
+        	distance = ((int) (Math.abs(current_node.x - portal.x) + Math.abs(current_node.y-portal.y)));
+        	break;
+        case 3://right
+        	distance = ((int) (Math.abs(current_node.x - portal.x) + Math.abs(current_node.y-portal.y)));
+        }*/
+        
+        
+        //calculate the Manhattan distance 
+        distance = ((int) (Math.abs(current_node.x - portal.x) + Math.abs(current_node.y-portal.y))); 
+        
+        return distance;
+        
+	}
+	
+	
+	public Vector<Vector2d> expandNodes(Vector<Vector2d> cerrados, Vector2d node, StateObservation stateObs){
+		Vector <Vector2d> copy_cerrados = new Vector<Vector2d>();
+		//copy unexplored nodes
+		copy_cerrados = cerrados;
+		Vector2d v = new Vector2d(node.x,node.y);
+		
+		//para obtener el tipo de superficie utilizar esto:
+		//stateObs.getObservationGrid()[(int)(portal.x)][(int)(portal.y)]);
+		
+		//[Observation{category=6, itype=9, obsID=99, position=16.0 : 32.0, reference=-1.0 : -1.0, sqDist=1378.0}]
+		// esto devuelve un arraylist, pero solo nos interesa category
+		
+		
+		//expand the nodes of the current node
+		if (node.y - 1 >= 0) {//abajo
+        	copy_cerrados.add(new Vector2d(node.x, node.y-1));
+        }
+        if (node.y + 1 <= stateObs.getObservationGrid()[0].length-1) {//arriba
+        	copy_cerrados.add(new Vector2d(node.x, node.y+1));
+        }
+        if (node.x - 1 >= 0) {//izquierda
+        	copy_cerrados.add(new Vector2d(node.x - 1, node.y));
+        }
+        if (node.x + 1 <= stateObs.getObservationGrid().length - 1) {//derecha
+        	copy_cerrados.add(new Vector2d(node.x + 1, node.y));
+        }
+		
+		return copy_cerrados;
 	}
 }

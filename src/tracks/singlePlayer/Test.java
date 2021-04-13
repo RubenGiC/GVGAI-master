@@ -40,8 +40,9 @@ public class Test {
 		int seed = new Random().nextInt();
 
 		// Game and level to play
-		int gameIdx = 11;//carga un juego si le ponemos 1 carga otro juego distinto
-		int levelIdx = 5; // level names from 0 to 4 (game_lvlN.txt) NIVELES DEL JUEGO.
+		//camel indx 15, boulderdash 11 (level 5)
+		int gameIdx = 15;//carga un juego si le ponemos 1 carga otro juego distinto
+		int levelIdx = 0; // level names from 0 to 4 (game_lvlN.txt) NIVELES DEL JUEGO.
 		String gameName = games[gameIdx][1];
 		String game = games[gameIdx][0];
 		String level1 = game.replace(gameName, gameName + "_lvl" + levelIdx);
@@ -52,10 +53,10 @@ public class Test {
 						// executed. null if not to save.
 
 		// 1. This starts a game, in a level, played by a human.
-		ArcadeMachine.playOneGame(game, level1, recordActionsFile, seed);
+		//ArcadeMachine.playOneGame(game, level1, recordActionsFile, seed);
 
 		// 2. This plays a game in a level by the controller.
-		//ArcadeMachine.runOneGame(game, level1, visuals, sampleCamel, recordActionsFile, seed, 0);
+		ArcadeMachine.runOneGame(game, level1, visuals, sampleCamel, recordActionsFile, seed, 0);
 
 
 		// 3. This replays a game from an action file previously recorded

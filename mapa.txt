@@ -1,0 +1,3 @@
+for(Observation o : stateObs.getImmovablePositions()[0]) {
+	mapa[(int)(o.position.x/factor_escala.x)][(int)(o.position.y/factor_escala.y)] = 0;
+}	

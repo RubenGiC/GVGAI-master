@@ -1,0 +1,6 @@
+Vector2d orientacion_avatar = stateObs.getAvatarOrientation();
+La orientación es: 
+orientacion_avatar.x = 1.0 y orientacion_avatar.y = 0.0 -> orientado hacia la derecha
+orientacion_avatar.x = 0.0 y orientacion_avatar.y = 1.0 -> orientado hacia abajo
+orientacion_avatar.x = 0.0 y orientacion_avatar.y = -1.0 -> orientado hacia arriba
+orientacion_avatar.x = -1.0 y orientacion_avatar.y = 0.0 -> orientado hacia la izquierda

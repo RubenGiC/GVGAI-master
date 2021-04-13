@@ -35,6 +35,16 @@ public class myAgent_Camel extends AbstractPlayer{
         portal = posiciones[0].get(0).position;
         portal.x = Math.floor(portal.x / fescala.x);
         portal.y = Math.floor(portal.y / fescala.y);
+        
+        System.out.println("ARRAY: ");
+        System.out.println(stateObs.getObservationGrid()[0][0]);
+        System.out.println(stateObs.getObservationGrid()[0][1]);
+        System.out.println(stateObs.getObservationGrid()[0][2]);
+        System.out.println(stateObs.getObservationGrid()[1][0]);
+        System.out.println(stateObs.getObservationGrid()[1][1]);
+        System.out.println(stateObs.getObservationGrid()[1][2]);
+        System.out.println("--> " + portal.x + ", " + portal.y);
+        System.out.println(stateObs.getObservationGrid()[(int)(portal.x)][(int)(portal.y)]);
 	}
 	
 	/**
