@@ -28,6 +28,7 @@ public class myAgent extends AbstractPlayer{
 	Vector2d fescala;
 	Vector2d portal;
 	
+	public Vector<Nodo> path;
 	/**
 	 * initialize all variables for the agent
 	 * @param stateObs Observation of the current state.
@@ -56,6 +57,42 @@ public class myAgent extends AbstractPlayer{
 	 */
 	@Override
 	public ACTIONS act(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
+		
+		//get avater position
+		Vector2d avatar =  new Vector2d(stateObs.getAvatarPosition().x / fescala.x, 
+        		stateObs.getAvatarPosition().y / fescala.y);
+		
+		//copia por referencia
+		Vector2d n = avatar.copy();
+		n.set(n.x+2, n.y+2);
+		
+		//para eliminar el primer elemento y acceder al siguiente elemento
+		/*if(path.indexOf(n) == -1) {
+		
+			path.addElement(avatar);
+			path.addElement(n);
+			System.out.println("before: " + path.get(0) + ", " + path.get(1));
+			
+			path.remove(0);
+			
+			if(path.size()>0) {
+				System.out.println("after: " + path.get(0));
+				
+			}
+		}*/
+		
+		/*if(path.firstElement() == avatar) {
+			
+		}*/
+		/*
+		 * UP --> (0, -1)
+		 * DOWN --> (0, 1)
+		 * RIGHT --> (-1, 0)
+		 * LEFT --> (1, 0)
+		 */
+		//System.out.println("ORIENTACION: " + stateObs.getAvatarOrientation());
+		
+		
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -64,9 +101,9 @@ public class myAgent extends AbstractPlayer{
 	 */
 	public void algoritmoEstrella(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
 		//created the vector of open and closed nodes
-		Vector<Vector2d> abiertos = new Vector<Vector2d>();
-		Vector<Vector2d> cerrados = new Vector<Vector2d>();
-		Vector2d best_node = new Vector2d();
+		Vector<Nodo> abiertos = new Vector<Nodo>();
+		Vector<Nodo> cerrados = new Vector<Nodo>();
+		Nodo best_node = new Nodo();
 		Integer g = 0;
 		
 		//end of algorithm stop
@@ -76,40 +113,47 @@ public class myAgent extends AbstractPlayer{
 		Vector2d avatar =  new Vector2d(stateObs.getAvatarPosition().x / fescala.x, 
         		stateObs.getAvatarPosition().y / fescala.y);
 		
+		
+		
 		//add the first node (the current position of avatar)
-		abiertos.add(avatar);
+		abiertos.add(new Nodo(avatar, avatar, orientacion(stateObs), 0, calculateManhattan(avatar,0)));
 		
 		do {
 			//save the best node
 			best_node = bestNode(abiertos, g);
 			
-			if(best_node == portal) {//if it is the target node 
+			if(best_node.hijo == portal) {//if it is the target node 
 				//expand the nodes of the actual node
-				expandNodes(abiertos,cerrados,best_node,stateObs);
+				expandNodes(abiertos,cerrados,best_node,stateObs, g);
 				//and end
 				stop = true;
 			}else {//else remove the node from the open list
 				if(abiertos.indexOf(best_node)>-1)
 					abiertos.remove(abiertos.indexOf(best_node));
+				
+				//and expand the nodes
+				expandNodes(abiertos, cerrados, best_node, stateObs, g);
 			}
 			stop = true;
 		}while(!stop);
+		
+		path = cerrados;
 	}
 	
 	/**
 	 * Obtiene el mejor nodo
 	 * @param abiertos vector of non-transversed nodes
 	 */
-	public Vector2d bestNode(Vector<Vector2d> abiertos, Integer g) {
+	public Nodo bestNode(Vector<Nodo> abiertos, Integer g) {
 		//save the best node
-		Vector2d best_node = new Vector2d();
+		Nodo best_node = new Nodo();
 		//save the value h, f and the minimum f
 		Integer h=0, f=0, min_f = 9999999;
 		
 		//traverse all open nodes
-		for(Vector2d nodo:abiertos) {
+		for(Nodo nodo:abiertos) {
 			//calculate heuristic distance
-			h = calculateManhattan(nodo,0);
+			h = calculateManhattan(nodo.hijo,0);
 			//and calculate the total distance
 			f = g + h;
 			//save the node with the smallest distance
@@ -151,14 +195,17 @@ public class myAgent extends AbstractPlayer{
 	}
 	
 	
-	public Vector<Vector2d> expandNodes(Vector<Vector2d> abiertos, Vector<Vector2d> cerrados, Vector2d node, StateObservation stateObs){
+	public Vector<Nodo> expandNodes(Vector<Nodo> abiertos, Vector<Nodo> cerrados, Nodo node, StateObservation stateObs, int g){
 		
 		//copy unexplored nodes
-		Vector <Vector2d> copy_abiertos = abiertos;
+		Vector <Nodo> copy_abiertos = abiertos;
 		//expand node
-		Vector2d new_node;
+		Nodo new_node;
+		Vector2d hijo;
 		ArrayList<Observation> casilla;
 		boolean not_wall = false;
+		
+		int orientacion_avatar = orientacion(stateObs);
 		
 		//para obtener el tipo de superficie utilizar esto:
 		//stateObs.getObservationGrid()[(int)(portal.x)][(int)(portal.y)]);
@@ -168,11 +215,12 @@ public class myAgent extends AbstractPlayer{
 		
 		
 		//expand the nodes of the current node
-		if (node.y - 1 >= 0) {//abajo
+		if (node.hijo.y - 1 >= 0) {//abajo
 			//save the new node
-			new_node = new Vector2d(node.x, node.y-1);
+			hijo = new Vector2d(node.hijo.x, node.hijo.y-1);
+			new_node = new Nodo(node.hijo, hijo, orientacion_avatar,calculateG(g, node.hijo, hijo, orientacion_avatar),calculateManhattan(hijo,0));
 			//save the properties of the box
-			casilla = stateObs.getObservationGrid()[(int)(node.x)][(int)(node.y)];
+			casilla = stateObs.getObservationGrid()[(int)(new_node.hijo.x)][(int)(new_node.hijo.y)];
 			
 			//if not empty
 			if(casilla.size()>0) {
@@ -183,15 +231,21 @@ public class myAgent extends AbstractPlayer{
 				not_wall = true;
 			}
 			
-			//if the new node hasn't been explored
-			if(cerrados.indexOf(new_node) != -1 && not_wall)
+			//if the new node hasn't been explored and it isn't a wall
+			if(cerrados.indexOf(new_node) == -1 && abiertos.indexOf(new_node) == -1 && not_wall)
 				copy_abiertos.add(new_node);//adds it to the list of open nodes
+			else if(g < calculateManhattan(new_node.hijo, 0)) {
+				
+			}else if(abiertos.indexOf(new_node) != -1 && g < calculateManhattan(new_node.hijo, 0)) {
+				
+			}
         }
 		//and repeat for other nodes (up, right and left)
-        if (node.y + 1 <= stateObs.getObservationGrid()[0].length-1) {//arriba
+        if (node.hijo.y + 1 <= stateObs.getObservationGrid()[0].length-1) {//arriba
         	
-        	new_node = new Vector2d(node.x, node.y+1);
-			casilla = stateObs.getObservationGrid()[(int)(node.x)][(int)(node.y)];
+        	hijo = new Vector2d(node.hijo.x, node.hijo.y+1);
+        	new_node = new Nodo(node.hijo, hijo, orientacion_avatar, calculateG(g, node.hijo, hijo, orientacion_avatar),calculateManhattan(hijo,0));
+			casilla = stateObs.getObservationGrid()[(int)(new_node.hijo.x)][(int)(new_node.hijo.y)];
 			
 			if(casilla.size()>0) {
 				
@@ -201,13 +255,14 @@ public class myAgent extends AbstractPlayer{
 				not_wall = true;
 			}
 			
-			if(cerrados.indexOf(new_node) != -1 && not_wall)
+			if(cerrados.indexOf(new_node) == -1 && abiertos.indexOf(new_node) == -1 && not_wall)
 				copy_abiertos.add(new_node);
         }
-        if (node.x - 1 >= 0) {//izquierda
+        if (node.hijo.x - 1 >= 0) {//izquierda
         	
-        	new_node = new Vector2d(node.x-1, node.y);
-			casilla = stateObs.getObservationGrid()[(int)(node.x)][(int)(node.y)];
+        	hijo = new Vector2d(node.hijo.x-1, node.hijo.y);
+        	new_node = new Nodo(node.hijo, hijo, orientacion_avatar, calculateG(g, node.hijo, hijo, orientacion_avatar), calculateManhattan(hijo,0));
+			casilla = stateObs.getObservationGrid()[(int)(new_node.hijo.x)][(int)(new_node.hijo.y)];
 			
 			if(casilla.size()>0) {
 				
@@ -217,13 +272,14 @@ public class myAgent extends AbstractPlayer{
 				not_wall = true;
 			}
 			
-			if(cerrados.indexOf(new_node) != -1 && not_wall)
+			if(cerrados.indexOf(new_node) == -1 && abiertos.indexOf(new_node) == -1 && not_wall)
 				copy_abiertos.add(new_node);
         }
-        if (node.x + 1 <= stateObs.getObservationGrid().length - 1) {//derecha
+        if (node.hijo.x + 1 <= stateObs.getObservationGrid().length - 1) {//derecha
         	
-        	new_node = new Vector2d(node.x+1, node.y);
-			casilla = stateObs.getObservationGrid()[(int)(node.x)][(int)(node.y)];
+        	hijo = new Vector2d(node.hijo.x+1, node.hijo.y);
+        	new_node = new Nodo(node.hijo, hijo, orientacion_avatar, calculateG(g, node.hijo, hijo, orientacion_avatar), calculateManhattan(hijo, 0));
+			casilla = stateObs.getObservationGrid()[(int)(new_node.hijo.x)][(int)(new_node.hijo.y)];
 			
 			if(casilla.size()>0) {
 				
@@ -233,10 +289,89 @@ public class myAgent extends AbstractPlayer{
 				not_wall = true;
 			}
 			
-			if(cerrados.indexOf(new_node) != -1 && not_wall)
+			if(cerrados.indexOf(new_node) == -1 && abiertos.indexOf(new_node) == -1 && not_wall)
 				copy_abiertos.add(new_node);
         }
 		
 		return copy_abiertos;
 	}
+	
+	public int orientacion(StateObservation stateObs) {
+		/*
+		 * UP --> (0, -1) --> 0
+		 * DOWN --> (0, 1) --> 1
+		 * RIGHT --> (-1, 0) --> 2
+		 * LEFT --> (1, 0) --> 3
+		 */
+		//System.out.println("ORIENTACION: " + stateObs.getAvatarOrientation());
+		if(stateObs.getAvatarOrientation().x == 0 && stateObs.getAvatarOrientation().y == -1) 
+			return 0;//UP
+		else if(stateObs.getAvatarOrientation().x == 0 && stateObs.getAvatarOrientation().y == 1)
+			return 1;//DOWN
+		else if(stateObs.getAvatarOrientation().x == -1 && stateObs.getAvatarOrientation().y == 0)
+			return 2;//RIGHT
+		return 3;//LEFT
+	}
+	
+	public int calculateG(int g, Vector2d padre, Vector2d hijo, int orientacion) {
+		int new_g = g;
+		
+		if(padre.x+1 == hijo.x && padre.y == hijo.y){//box right
+			if(orientacion == 2)
+				++new_g;
+			else
+				new_g +=2;
+		}else if(padre.x-1 == hijo.x && padre.y == hijo.y){//box left
+			if(orientacion == 3)
+				++new_g;
+			else
+				new_g +=2;
+		}else if(padre.x == hijo.x && padre.y+1 == hijo.y){//box up
+			if(orientacion == 0)
+				++new_g;
+			else
+				new_g +=2;
+		}else if(padre.x == hijo.x && padre.y-1 == hijo.y){//box down
+			if(orientacion == 1)
+				++new_g;
+			else
+				new_g +=2;
+		}
+		
+		
+		return new_g;
+	}
 }
+/**
+ * class Nodo containing:
+ * @param padre: node of parent
+ * @param hijo: parent child node
+ * @param orientacion: cell orientation relative to avatar orientation
+ * @param g: real cost
+ * @param h: heuristic cost
+ * @author ruben
+ *
+ */
+class Nodo {
+	
+	public Vector2d padre;
+	public Vector2d hijo;
+	public int orientacion;
+	public int g;
+	public int h;
+	
+	public Nodo() {
+		padre = new Vector2d();
+		hijo = new Vector2d();
+		orientacion = -1;
+		h = g = 0;
+	}
+	
+	public Nodo(Vector2d padre, Vector2d hijo, int orientacion, int g, int h) {
+		this.padre = padre;
+		this.hijo = hijo;
+		this.orientacion = orientacion;
+		this.g = g;
+		this.h = h;
+	}
+};
