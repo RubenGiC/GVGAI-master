@@ -36,6 +36,7 @@ public class myAgent_Camel extends AbstractPlayer{
         portal.x = Math.floor(portal.x / fescala.x);
         portal.y = Math.floor(portal.y / fescala.y);
         
+        
         System.out.println("ARRAY: ");
         System.out.println(stateObs.getObservationGrid()[0][0]);
         System.out.println(stateObs.getObservationGrid()[0][1]);
@@ -58,6 +59,9 @@ public class myAgent_Camel extends AbstractPlayer{
         //Posicion del avatar
         Vector2d avatar =  new Vector2d(stateObs.getAvatarPosition().x / fescala.x, 
         		stateObs.getAvatarPosition().y / fescala.y);
+        
+        //System.out.println(" --> " + stateObs.getObservationGrid()[(int)(avatar.x)][(int)(avatar.y)]);
+        System.out.println("0 -->" + stateObs.getObservationGrid()[(int)(avatar.x)][(int)(avatar.y)].get(0).category);
         
         //Probamos las cuatro acciones y calculamos la distancia del nuevo estado al portal.
         Vector2d newPos_up = avatar, newPos_down = avatar, newPos_left = avatar, newPos_right = avatar;

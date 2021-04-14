@@ -46,7 +46,7 @@ public class myAgent extends AbstractPlayer{
         portal.y = Math.floor(portal.y / fescala.y);
         
         //Calcula una ruta optima usando A*
-        
+        algoritmoEstrella(stateObs, elapsedTimer);
 	}
 	
 	/**
@@ -83,9 +83,16 @@ public class myAgent extends AbstractPlayer{
 			//save the best node
 			best_node = bestNode(abiertos, g);
 			
-			if(best_node == portal) {
-				
+			if(best_node == portal) {//if it is the target node 
+				//expand the nodes of the actual node
+				expandNodes(abiertos,cerrados,best_node,stateObs);
+				//and end
+				stop = true;
+			}else {//else remove the node from the open list
+				if(abiertos.indexOf(best_node)>-1)
+					abiertos.remove(abiertos.indexOf(best_node));
 			}
+			stop = true;
 		}while(!stop);
 	}
 	
@@ -144,11 +151,14 @@ public class myAgent extends AbstractPlayer{
 	}
 	
 	
-	public Vector<Vector2d> expandNodes(Vector<Vector2d> cerrados, Vector2d node, StateObservation stateObs){
-		Vector <Vector2d> copy_cerrados = new Vector<Vector2d>();
+	public Vector<Vector2d> expandNodes(Vector<Vector2d> abiertos, Vector<Vector2d> cerrados, Vector2d node, StateObservation stateObs){
+		
 		//copy unexplored nodes
-		copy_cerrados = cerrados;
-		Vector2d v = new Vector2d(node.x,node.y);
+		Vector <Vector2d> copy_abiertos = abiertos;
+		//expand node
+		Vector2d new_node;
+		ArrayList<Observation> casilla;
+		boolean not_wall = false;
 		
 		//para obtener el tipo de superficie utilizar esto:
 		//stateObs.getObservationGrid()[(int)(portal.x)][(int)(portal.y)]);
@@ -159,18 +169,74 @@ public class myAgent extends AbstractPlayer{
 		
 		//expand the nodes of the current node
 		if (node.y - 1 >= 0) {//abajo
-        	copy_cerrados.add(new Vector2d(node.x, node.y-1));
+			//save the new node
+			new_node = new Vector2d(node.x, node.y-1);
+			//save the properties of the box
+			casilla = stateObs.getObservationGrid()[(int)(node.x)][(int)(node.y)];
+			
+			//if not empty
+			if(casilla.size()>0) {
+				//check if it isn't a wall
+				if(casilla.get(0).category != 4)
+					not_wall = true;
+			}else {
+				not_wall = true;
+			}
+			
+			//if the new node hasn't been explored
+			if(cerrados.indexOf(new_node) != -1 && not_wall)
+				copy_abiertos.add(new_node);//adds it to the list of open nodes
         }
+		//and repeat for other nodes (up, right and left)
         if (node.y + 1 <= stateObs.getObservationGrid()[0].length-1) {//arriba
-        	copy_cerrados.add(new Vector2d(node.x, node.y+1));
+        	
+        	new_node = new Vector2d(node.x, node.y+1);
+			casilla = stateObs.getObservationGrid()[(int)(node.x)][(int)(node.y)];
+			
+			if(casilla.size()>0) {
+				
+				if(casilla.get(0).category != 4)
+					not_wall = true;
+			}else {
+				not_wall = true;
+			}
+			
+			if(cerrados.indexOf(new_node) != -1 && not_wall)
+				copy_abiertos.add(new_node);
         }
         if (node.x - 1 >= 0) {//izquierda
-        	copy_cerrados.add(new Vector2d(node.x - 1, node.y));
+        	
+        	new_node = new Vector2d(node.x-1, node.y);
+			casilla = stateObs.getObservationGrid()[(int)(node.x)][(int)(node.y)];
+			
+			if(casilla.size()>0) {
+				
+				if(casilla.get(0).category != 4)
+					not_wall = true;
+			}else {
+				not_wall = true;
+			}
+			
+			if(cerrados.indexOf(new_node) != -1 && not_wall)
+				copy_abiertos.add(new_node);
         }
         if (node.x + 1 <= stateObs.getObservationGrid().length - 1) {//derecha
-        	copy_cerrados.add(new Vector2d(node.x + 1, node.y));
+        	
+        	new_node = new Vector2d(node.x+1, node.y);
+			casilla = stateObs.getObservationGrid()[(int)(node.x)][(int)(node.y)];
+			
+			if(casilla.size()>0) {
+				
+				if(casilla.get(0).category != 4)
+					not_wall = true;
+			}else {
+				not_wall = true;
+			}
+			
+			if(cerrados.indexOf(new_node) != -1 && not_wall)
+				copy_abiertos.add(new_node);
         }
 		
-		return copy_cerrados;
+		return copy_abiertos;
 	}
 }

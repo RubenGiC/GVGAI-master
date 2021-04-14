@@ -30,6 +30,9 @@ public class Test {
 		String sampleOLETSController = "tracks.singlePlayer.advanced.olets.Agent";
 		//example camel
 		String sampleCamel = "src_girela_castellon_ruben.myAgent_Camel";
+		
+		//My Agent
+		String myAgent = "src_girela_castellon_ruben.myAgent";
 
 		//Load available games
 		String spGamesCollection =  "examples/all_games_sp.csv";
@@ -41,8 +44,8 @@ public class Test {
 
 		// Game and level to play
 		//camel indx 15, boulderdash 11 (level 5)
-		int gameIdx = 15;//carga un juego si le ponemos 1 carga otro juego distinto
-		int levelIdx = 0; // level names from 0 to 4 (game_lvlN.txt) NIVELES DEL JUEGO.
+		int gameIdx = 11;//carga un juego si le ponemos 1 carga otro juego distinto
+		int levelIdx = 5; // level names from 0 to 4 (game_lvlN.txt) NIVELES DEL JUEGO.
 		String gameName = games[gameIdx][1];
 		String game = games[gameIdx][0];
 		String level1 = game.replace(gameName, gameName + "_lvl" + levelIdx);
@@ -56,7 +59,8 @@ public class Test {
 		//ArcadeMachine.playOneGame(game, level1, recordActionsFile, seed);
 
 		// 2. This plays a game in a level by the controller.
-		ArcadeMachine.runOneGame(game, level1, visuals, sampleCamel, recordActionsFile, seed, 0);
+		//ArcadeMachine.runOneGame(game, level1, visuals, sampleCamel, recordActionsFile, seed, 0);
+		ArcadeMachine.runOneGame(game, level1, visuals, myAgent, recordActionsFile, seed, 0);
 
 
 		// 3. This replays a game from an action file previously recorded
