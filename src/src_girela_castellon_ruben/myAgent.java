@@ -52,8 +52,15 @@ public class myAgent extends AbstractPlayer{
         portal.x = Math.floor(portal.x / fescala.x);
         portal.y = Math.floor(portal.y / fescala.y);
         
-        //Calcula una ruta optima usando A*
-        path = algoritmoEstrella(stateObs, elapsedTimer);
+        System.out.println(stateObs.getNPCPositions());
+        
+        //si no hay objetos es el nivel 1
+        if(stateObs.getResourcesPositions()==null)
+        	//Calcula una ruta optima usando A*
+        	path = algoritmoEstrella(stateObs, elapsedTimer);
+        //si no tiene enemigos es el nivel 2
+        else if(stateObs.getNPCPositions() == null)
+        	path = algoritmoGreedyManhattan(stateObs, elapsedTimer, 9);
 	}
 	
 	/**
@@ -120,6 +127,23 @@ public class myAgent extends AbstractPlayer{
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	public ArrayList<String> algoritmoGreedyManhattan(StateObservation stateObs, ElapsedCpuTimer elapsedTimer, int max_diamont) {
+		int cont_diamont=0;
+		
+		System.out.println("max y: "+(stateObs.getObservationGrid()[0].length-1));
+		System.out.println("max x: "+(stateObs.getObservationGrid().length-1));
+		
+		System.out.println(stateObs.getResourcesPositions()[0]);
+		for(Observation obs:stateObs.getResourcesPositions()[0]) {
+			System.out.println((int)(obs.position.x)+", "+(int)(obs.position.y));
+			//System.out.println(stateObs.getObservationGrid()[(int)(obs.position.x)][(int)(obs.position.y)].get(0).category);
+		}
+		
+		return null;
+	}
+	
+	
 	/*
 	 * Algortimo A* que calcula la ruta optima hacia el portal
 	 */
@@ -430,7 +454,7 @@ public class myAgent extends AbstractPlayer{
 			dir="UP";
 		else if(nod1.x == nod2.x && (nod1.y+1) == nod2.y)
 			dir="DOW";
-		System.out.println(dir);
+		//System.out.println(dir);
 		return dir;
 	}
 	
@@ -484,7 +508,7 @@ public class myAgent extends AbstractPlayer{
 		Nodo next_nodo = new Nodo();//guardo el siguiente nodo
 		next_nodo.hijo = objetivo;//guardo el nodo objetivo para buscar el padre de ese nodo
 		
-		System.out.println("Portal: "+objetivo);
+		//System.out.println("Portal: "+objetivo);
 		
 		while(next_nodo.hijo.x != -1){//mientras no encuentre el nodo inicial (avatar)
 			//System.out.println("Padre: "+next_nodo.hijo);

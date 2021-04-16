@@ -45,7 +45,7 @@ public class Test {
 		// Game and level to play
 		//camel indx 15, boulderdash 11 (level 5)
 		int gameIdx = 11;//carga un juego si le ponemos 1 carga otro juego distinto
-		int levelIdx = 5; // level names from 0 to 4 (game_lvlN.txt) NIVELES DEL JUEGO.
+		int levelIdx = 6; // level names from 0 to 4 (game_lvlN.txt) NIVELES DEL JUEGO.
 		String gameName = games[gameIdx][1];
 		String game = games[gameIdx][0];
 		String level1 = game.replace(gameName, gameName + "_lvl" + levelIdx);

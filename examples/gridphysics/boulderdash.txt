@@ -37,7 +37,7 @@ BasicGame
 
 		crab butterfly > killSprite
 		butterfly crab > transformTo stype=diamond scoreChange=1
-		exitdoor avatar > killIfOtherHasMore resource=diamond limit=0
+		exitdoor avatar > killIfOtherHasMore resource=diamond limit=9
 
 	TerminationSet
 		SpriteCounter stype=avatar limit=0 win=False
