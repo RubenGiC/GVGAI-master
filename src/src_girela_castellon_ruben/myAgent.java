@@ -144,11 +144,12 @@ public class myAgent extends AbstractPlayer{
 		Nodo best_node = new Nodo();
 		Nodo best_node_expand = new Nodo();
 		Vector2d nodo_objetivo = new Vector2d();
-		Integer distancia_actual=0, distancia_min = 999, pos_cerrados = -1;
+		Integer distancia_actual=0, distancia_min = 999, pos_cerrados = -1, pos_abiertos = -1;
 		boolean objetive = false, exit = false;
 		ArrayList<Observation> casilla;//tipo de casilla
 		Vector<Pair> lista_sucesores = new Vector<Pair>();
 		ArrayList<String> camino = new ArrayList<String>();
+		ArrayList<String> sub_camino = new ArrayList<String>();
 		
 		Nodo inicial_N = nodo_actual.clone();
 		Integer cont = 0;
@@ -187,7 +188,7 @@ public class myAgent extends AbstractPlayer{
 			
 			abiertos.add(nodo_actual.clone());
 			System.out.println("Nodo objetivo: "+nodo_objetivo);
-			//System.out.println("Nodo actual_gema_anterior: "+nodo_actual.hijo+", pad: "+nodo_actual.padre);
+			//System.out.println("Nodo actual_gema_anterior: "+nodo_actual.hijo+", pad: "+nodo_actual.padre+", h = "+nodo_actual.h);
 			
 			while(!abiertos.isEmpty()) {
 				//save the best node
@@ -229,13 +230,14 @@ public class myAgent extends AbstractPlayer{
 				
 				//si el mejor nodo obtenido es el nodo objetivo termina
 				if(best_node.hijo.x == nodo_objetivo.x && best_node.hijo.y == nodo_objetivo.y) { 
-					abiertos.clear();					
+					abiertos.clear();
+					objetive = true;
 					nodo_actual.hijo = nodo_objetivo;
 					
 				}else {//en caso contrario expando los nodos vecinos o sucesores
 					
-					//System.out.println("Coste cada paso: "+best_node.g+" + "+best_node.h+" = "+(best_node.g+best_node.h));
-					//System.out.println("Nodo Padre: "+best_node.hijo);
+					/*System.out.println("Coste cada paso: "+best_node.g+" + "+best_node.h+" = "+(best_node.g+best_node.h));
+					System.out.println("Nodo Padre: "+best_node.hijo);*/
 					
 					//expand the nodes
 					lista_sucesores=expandNodes(best_node, stateObs);
@@ -249,26 +251,37 @@ public class myAgent extends AbstractPlayer{
 							//creo mi nodo personalizado pasandole el nodo padre, el nodo sucesor expandido, la orientacion de la casilla, g y h
 							Nodo new_node = new Nodo(best_node.hijo, sucesor.key, sucesor.value,0,calculateManhattan(sucesor.key, nodo_objetivo));
 								
-							//System.out.println("Padre: "+new_node.padre+", Hijo: "+new_node.hijo+", h= "+new_node.h);
+							//System.out.println("No es el padre --> Padre: "+new_node.padre+", Hijo: "+new_node.hijo+", h= "+new_node.h);
+							//busco si esta ese nodo en la lista de abiertos o en cerrados 
+							pos_abiertos = contiene(abiertos, new_node);
+							pos_cerrados = contiene(cerrados, new_node);
 							//if the new node hasn't been explored
-							if(new_node.h < best_node.h)
+							if(pos_abiertos == -1 && pos_cerrados == -1)
 								abiertos.add(new_node);//adds it to the list of open nodes
 							
 						}
 					}
 					//System.out.println("Size abiertos: "+abiertos.size());
 				}
+				
 				++cont;
 			}
 			
-			/*System.out.println("Ruta -----------------------------------");
+			System.out.println("Ruta -----------------------------------");
 			for(Nodo n:cerrados)
-				System.out.println("Padre: "+n.padre+", Hijo: "+n.hijo);*/
+				System.out.println("Padre: "+n.padre+", Hijo: "+n.hijo);
 			
 			
-			camino.addAll(construirPath(cerrados,inicial_N,nodo_objetivo));
-			/*System.out.println(camino.size());
-			System.out.println(camino);*/
+			sub_camino=construirPath(cerrados,inicial_N,nodo_objetivo);
+			
+			/*System.out.println(sub_camino.size());
+			System.out.println(sub_camino);*/
+			
+			for(int i = sub_camino.size()-1; i >=0; --i) {
+				camino.add(sub_camino.get(i));
+			}
+			System.out.println(camino.size());
+			System.out.println(camino);
 			cerrados.clear();
 			//inicial_N = nodo_actual.clone();
 			
