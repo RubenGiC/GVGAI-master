@@ -134,6 +134,8 @@ public class myAgent extends AbstractPlayer{
 	}
 	/**
 	 * Es un algortimo Greedy usando la distancia Manhattan
+	 * Lo he personalizado ya que la eleccion de la gema es Greedy utilizando la distancia Manhattan, 
+	 * pero la ruta a seleccionar entre el avatar y la gema es el A*, con lo cual estoy combinando 2 algoritmos en 1.
 	 * @param stateObs
 	 * @param elapsedTimer
 	 * @param max_diamont numero maximo de diamantes
@@ -282,8 +284,24 @@ public class myAgent extends AbstractPlayer{
 							//busco si esta ese nodo en la lista de abiertos o en cerrados 
 							pos_abiertos = contiene(abiertos, new_node);
 							pos_cerrados = contiene(cerrados, new_node);
+							
+							//si el sucesor esta ya en cerrados y la g que tiene en cerrados es > que la g del sucesor actual
+							//es decir que tiene mejor coste que el que tiene guardado
+							if(pos_cerrados != -1) {
+								if(cerrados.get(pos_cerrados).g > new_node.g) {
+									//lo actualizo
+									cerrados.set(pos_cerrados, new_node);
+									
+									/*cerrados.remove(pos_cerrados);
+									abiertos.add(new_node);*/
+								}
+							//si esta en la lista de abiertos y la g del sucesor es mejor que la que tiene en abiertos
+							}else if(pos_abiertos != -1) {
+								if(abiertos.get(pos_abiertos).g > new_node.g)
+									abiertos.set(pos_abiertos, new_node);//actualizo el nodo hijo con el nuevo padre
+								
 							//if the new node hasn't been explored
-							if(pos_abiertos == -1 && pos_cerrados == -1)
+							}else if(pos_abiertos == -1 && pos_cerrados == -1)
 								abiertos.add(new_node);//adds it to the list of open nodes
 							
 						}
