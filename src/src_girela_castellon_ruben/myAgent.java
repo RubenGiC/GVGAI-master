@@ -132,21 +132,28 @@ public class myAgent extends AbstractPlayer{
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
+	/**
+	 * Es un algortimo Greedy usando la distancia Manhattan
+	 * @param stateObs
+	 * @param elapsedTimer
+	 * @param max_diamont numero maximo de diamantes
+	 * @return
+	 */
 	public ArrayList<String> algoritmoGreedyManhattan(StateObservation stateObs, ElapsedCpuTimer elapsedTimer, int max_diamont) {
-		int cont_diamont=0;
+		int cont_diamont=0;//numero de gemas cogidas
 		abiertos = new ArrayList<Nodo>();
-		ArrayList<Vector2d> gemas_restantes = new ArrayList<Vector2d>();
-		ArrayList<Integer> distancias = new ArrayList<Integer>();
 		cerrados = new ArrayList<Nodo>();
+		ArrayList<Vector2d> gemas_restantes = new ArrayList<Vector2d>();//lista de gemas no cogidas
+		orientacion_avatar = orientacion(stateObs);
 		Vector2d avatar = new Vector2d(stateObs.getAvatarPosition().x / fescala.x,stateObs.getAvatarPosition().y / fescala.y);
-		Nodo nodo_actual = new Nodo(new Vector2d(-1, -1), avatar, orientacion_avatar, 0, calculateManhattan(avatar, portal));
+		//nodo actual de donde parte, en este caso la posicion del avatar
+		Nodo nodo_actual = new Nodo(new Vector2d(-1, -1), avatar, 0, 0, calculateManhattan(avatar, portal));
 		Nodo best_node = new Nodo();
-		Nodo best_node_expand = new Nodo();
+		
+		//nodo objetivo seleccionado para las gemas y el portal
 		Vector2d nodo_objetivo = new Vector2d();
 		Integer distancia_actual=0, distancia_min = 999, pos_cerrados = -1, pos_abiertos = -1;
-		boolean objetive = false, exit = false;
-		ArrayList<Observation> casilla;//tipo de casilla
+		boolean exit = false;
 		Vector<Pair> lista_sucesores = new Vector<Pair>();
 		ArrayList<String> camino = new ArrayList<String>();
 		ArrayList<String> sub_camino = new ArrayList<String>();
@@ -165,47 +172,59 @@ public class myAgent extends AbstractPlayer{
 			//System.out.println(stateObs.getObservationGrid()[(int)(obs.position.x)][(int)(obs.position.y)].get(0).category);
 		}
 		
-		System.out.println(gemas_restantes);
-		
+		//System.out.println(gemas_restantes);
+		//mientras no obtenga las 9 gemas y haya salido por la puerta
 		while(!exit) {
+			//si no ha cogido el numero maximo de gemas
 			if(cont_diamont < max_diamont) {
+				//selecciona la gema más cercana
 				for(Vector2d gema:gemas_restantes) {
 					distancia_actual = calculateManhattan(nodo_actual.hijo,gema);
-					if(calculateManhattan(nodo_actual.hijo,gema)<distancia_min) {
+					if(distancia_actual<distancia_min) {
 						distancia_min = distancia_actual;
 						nodo_objetivo = gema;
 					}
 				}
 				distancia_min = 999;
-				gemas_restantes.remove(gemas_restantes.indexOf(nodo_objetivo));
 			}
+			//si se han cogido todas las gemas busco la ruta optima a la puerta
 			if(cont_diamont>=max_diamont) {
 				nodo_objetivo = portal;
 				exit = true;
 			}
-			
+			//calculo la distancia heuristica entre la posicion actual y la gema escogida o puerta 
 			nodo_actual.h = calculateManhattan(nodo_actual.hijo,nodo_objetivo);
-			
+			//lo añado a la lista de abiertos
 			abiertos.add(nodo_actual.clone());
-			System.out.println("Nodo objetivo: "+nodo_objetivo);
+			//System.out.println("Nodo objetivo: "+nodo_objetivo);
 			//System.out.println("Nodo actual_gema_anterior: "+nodo_actual.hijo+", pad: "+nodo_actual.padre+", h = "+nodo_actual.h);
 			
 			while(!abiertos.isEmpty()) {
+				
+				/*System.out.println("--------------------------------------");
+				for(Nodo nod:abiertos) {
+					System.out.println("Padre: "+nod.padre+", Hijo: "+nod.hijo);
+				}*/
+				
 				//save the best node
 				best_node = bestNode();
+				
+				/*if(best_node.hijo.x != nodo_actual.hijo.x && best_node.hijo.y != nodo_actual.hijo.y && cont_diamont<max_diamont) {
+					for(Vector2d gema:gemas_restantes) {
+						distancia_actual = calculateManhattan(best_node.hijo,gema);
+						if(calculateManhattan(best_node.hijo,gema)<distancia_min) {
+							distancia_min = distancia_actual;
+							nodo_objetivo = gema;
+						}
+					}
+					distancia_min = 999;
+				}*/
 				
 				//add the best node in abiertos and remove of cerrados
 				cerrados.add(best_node);	
 				abiertos.remove(abiertos.indexOf(best_node));
 				
-				//System.out.println("Mejor nodo: "+best_node.hijo+", con padre: "+best_node.padre);
-				
-				//si el mejor nodo no es el avatar obtengo la orientacion ficticia del avatar en la siguiente casilla
-				/**
-				 * esto me sirva para saber si da un paso o 2 pasos, es decir si tiene que cambiar de direccion tiene que hacer 2 movimientos
-				 * - 1 para moverse a la orientación
-				 * - 2 para ir a la casilla
-				 */
+				//para saber la orientacion del avatar en cada movimiento
 				if(best_node.hijo != avatar) {
 					switch(best_node.orientacion) {
 					case 0://arriba
@@ -226,13 +245,22 @@ public class myAgent extends AbstractPlayer{
 						break;
 					}
 				}
-				//System.out.println("Orientacion despues: " + orientacion_avatar);
+				
+				//System.out.println("Mejor nodo: "+best_node.hijo+", con padre: "+best_node.padre);
 				
 				//si el mejor nodo obtenido es el nodo objetivo termina
 				if(best_node.hijo.x == nodo_objetivo.x && best_node.hijo.y == nodo_objetivo.y) { 
 					abiertos.clear();
-					objetive = true;
+					/*System.out.println(nodo_objetivo);
+					System.out.println(gemas_restantes.indexOf(nodo_objetivo));*/
+					//si ha alcanzado una gema lo borra de la lista de gemas no cogidas aun
+					if(gemas_restantes.indexOf(nodo_objetivo) != -1)
+						gemas_restantes.remove(gemas_restantes.indexOf(nodo_objetivo));
+					//System.out.println(gemas_restantes);
+					//actualizo la posición actual
 					nodo_actual.hijo = nodo_objetivo;
+					
+					++cont_diamont;//cuento la gema escogida
 					
 				}else {//en caso contrario expando los nodos vecinos o sucesores
 					
@@ -241,7 +269,6 @@ public class myAgent extends AbstractPlayer{
 					
 					//expand the nodes
 					lista_sucesores=expandNodes(best_node, stateObs);
-					best_node_expand = best_node;
 					
 					//recorro los sucesores validos (que no sean muros y esten dentro de las dimensiones del mapa)
 					for(Pair sucesor:lista_sucesores) {
@@ -249,7 +276,7 @@ public class myAgent extends AbstractPlayer{
 						//si no es el nodo padre
 						if(best_node.padre.x != sucesor.key.x || best_node.padre.y != sucesor.key.y) {
 							//creo mi nodo personalizado pasandole el nodo padre, el nodo sucesor expandido, la orientacion de la casilla, g y h
-							Nodo new_node = new Nodo(best_node.hijo, sucesor.key, sucesor.value,0,calculateManhattan(sucesor.key, nodo_objetivo));
+							Nodo new_node = new Nodo(best_node.hijo, sucesor.key, sucesor.value,calculateG(best_node.g, sucesor.value, orientacion_avatar),calculateManhattan(sucesor.key, nodo_objetivo));
 								
 							//System.out.println("No es el padre --> Padre: "+new_node.padre+", Hijo: "+new_node.hijo+", h= "+new_node.h);
 							//busco si esta ese nodo en la lista de abiertos o en cerrados 
@@ -267,36 +294,37 @@ public class myAgent extends AbstractPlayer{
 				++cont;
 			}
 			
-			System.out.println("Ruta -----------------------------------");
+			/*System.out.println("Ruta -----------------------------------");
 			for(Nodo n:cerrados)
-				System.out.println("Padre: "+n.padre+", Hijo: "+n.hijo);
+				System.out.println("Padre: "+n.padre+", Hijo: "+n.hijo);*/
 			
-			
+			//guardo el subcamino desde el nodo inicial hasta la gema o portal
 			sub_camino=construirPath(cerrados,inicial_N,nodo_objetivo);
-			
+			//actualizo el nodo inicial a la de la gema o portal
+			inicial_N = nodo_actual.clone();
+			//System.out.println(inicial_N.hijo+" vs "+nodo_actual.hijo);
 			/*System.out.println(sub_camino.size());
 			System.out.println(sub_camino);*/
 			
+			//guardo el subcamino en el camino final
 			for(int i = sub_camino.size()-1; i >=0; --i) {
 				camino.add(sub_camino.get(i));
 			}
-			System.out.println(camino.size());
-			System.out.println(camino);
+			/*System.out.println(camino.size());
+			System.out.println(camino);*/
+			
+			//limpio la lista de cerrados
 			cerrados.clear();
-			//inicial_N = nodo_actual.clone();
 			
-			//System.out.println("Numero gemas: "+(cont_diamont+1));
-			
-			++cont_diamont;
+			//System.out.println("Numero gemas: "+(cont_diamont));
 		}
+		//invierto el camino que esta al reves
 		ArrayList<String> camino_inverso = new ArrayList<String>();
 		for(int i = camino.size()-1; i>=0; --i) {
 			camino_inverso.add(camino.get(i));
 		}
-		//cerrados.add(portal);
-		//generaPathGreedy(cerrados, avatar);
 		
-		return camino_inverso;
+		return camino_inverso;//y devuelvo la solución
 	}
 	
 	
