@@ -52,7 +52,6 @@ public class myAgent extends AbstractPlayer{
         portal.x = Math.floor(portal.x / fescala.x);
         portal.y = Math.floor(portal.y / fescala.y);
         
-        System.out.println(stateObs.getNPCPositions());
         
         //si no hay objetos es el nivel 1
         if(stateObs.getResourcesPositions()==null)
@@ -61,6 +60,8 @@ public class myAgent extends AbstractPlayer{
         //si no tiene enemigos es el nivel 2
         else if(stateObs.getNPCPositions() == null)
         	path = algoritmoGreedyManhattan(stateObs, elapsedTimer, 9);
+        
+        
 	}
 	
 	/**
@@ -97,8 +98,12 @@ public class myAgent extends AbstractPlayer{
 		}*/
 		
 		//System.out.println(orientacion(stateObs));
+		
 		if(path != null) {
+			
 			if(path.size()>0) {
+				/*System.out.println(path.size());
+				System.out.println(path);*/
 				switch(path.get(path.size()-1)) {
 					case "UP":
 						//System.out.println("ARRIBA");
@@ -130,17 +135,155 @@ public class myAgent extends AbstractPlayer{
 	
 	public ArrayList<String> algoritmoGreedyManhattan(StateObservation stateObs, ElapsedCpuTimer elapsedTimer, int max_diamont) {
 		int cont_diamont=0;
+		abiertos = new ArrayList<Nodo>();
+		ArrayList<Vector2d> gemas_restantes = new ArrayList<Vector2d>();
+		ArrayList<Integer> distancias = new ArrayList<Integer>();
+		cerrados = new ArrayList<Nodo>();
+		Vector2d avatar = new Vector2d(stateObs.getAvatarPosition().x / fescala.x,stateObs.getAvatarPosition().y / fescala.y);
+		Nodo nodo_actual = new Nodo(new Vector2d(-1, -1), avatar, orientacion_avatar, 0, calculateManhattan(avatar, portal));
+		Nodo best_node = new Nodo();
+		Nodo best_node_expand = new Nodo();
+		Vector2d nodo_objetivo = new Vector2d();
+		Integer distancia_actual=0, distancia_min = 999, pos_cerrados = -1;
+		boolean objetive = false, exit = false;
+		ArrayList<Observation> casilla;//tipo de casilla
+		Vector<Pair> lista_sucesores = new Vector<Pair>();
+		ArrayList<String> camino = new ArrayList<String>();
 		
-		System.out.println("max y: "+(stateObs.getObservationGrid()[0].length-1));
-		System.out.println("max x: "+(stateObs.getObservationGrid().length-1));
+		Nodo inicial_N = nodo_actual.clone();
+		Integer cont = 0;
 		
-		System.out.println(stateObs.getResourcesPositions()[0]);
+		//System.out.println("max y: "+(stateObs.getObservationGrid()[0].length-1));
+		//System.out.println("max x: "+(stateObs.getObservationGrid().length-1));
+		
+		//System.out.println(stateObs.getResourcesPositions()[0]);
+		//añado las posiciones de las gemas
 		for(Observation obs:stateObs.getResourcesPositions()[0]) {
-			System.out.println((int)(obs.position.x)+", "+(int)(obs.position.y));
+			//System.out.println((int)(obs.position.x/fescala.x)+", "+(int)(obs.position.y/fescala.y));
+			gemas_restantes.add(new Vector2d((obs.position.x/fescala.x),(int)(obs.position.y/fescala.y)));
 			//System.out.println(stateObs.getObservationGrid()[(int)(obs.position.x)][(int)(obs.position.y)].get(0).category);
 		}
 		
-		return null;
+		System.out.println(gemas_restantes);
+		
+		while(!exit) {
+			if(cont_diamont < max_diamont) {
+				for(Vector2d gema:gemas_restantes) {
+					distancia_actual = calculateManhattan(nodo_actual.hijo,gema);
+					if(calculateManhattan(nodo_actual.hijo,gema)<distancia_min) {
+						distancia_min = distancia_actual;
+						nodo_objetivo = gema;
+					}
+				}
+				distancia_min = 999;
+				gemas_restantes.remove(gemas_restantes.indexOf(nodo_objetivo));
+			}
+			if(cont_diamont>=max_diamont) {
+				nodo_objetivo = portal;
+				exit = true;
+			}
+			
+			nodo_actual.h = calculateManhattan(nodo_actual.hijo,nodo_objetivo);
+			
+			abiertos.add(nodo_actual.clone());
+			System.out.println("Nodo objetivo: "+nodo_objetivo);
+			//System.out.println("Nodo actual_gema_anterior: "+nodo_actual.hijo+", pad: "+nodo_actual.padre);
+			
+			while(!abiertos.isEmpty()) {
+				//save the best node
+				best_node = bestNode();
+				
+				//add the best node in abiertos and remove of cerrados
+				cerrados.add(best_node);	
+				abiertos.remove(abiertos.indexOf(best_node));
+				
+				//System.out.println("Mejor nodo: "+best_node.hijo+", con padre: "+best_node.padre);
+				
+				//si el mejor nodo no es el avatar obtengo la orientacion ficticia del avatar en la siguiente casilla
+				/**
+				 * esto me sirva para saber si da un paso o 2 pasos, es decir si tiene que cambiar de direccion tiene que hacer 2 movimientos
+				 * - 1 para moverse a la orientación
+				 * - 2 para ir a la casilla
+				 */
+				if(best_node.hijo != avatar) {
+					switch(best_node.orientacion) {
+					case 0://arriba
+						if(orientacion_avatar != 0)
+							orientacion_avatar = 0;
+						break;
+					case 1://abajo
+						if(orientacion_avatar != 1)
+							orientacion_avatar = 1;
+						break;
+					case 2://derecha
+						if(orientacion_avatar != 2)
+							orientacion_avatar = 2;
+						break;
+					case 3://izquierda
+						if(orientacion_avatar != 3)
+							orientacion_avatar = 3;
+						break;
+					}
+				}
+				//System.out.println("Orientacion despues: " + orientacion_avatar);
+				
+				//si el mejor nodo obtenido es el nodo objetivo termina
+				if(best_node.hijo.x == nodo_objetivo.x && best_node.hijo.y == nodo_objetivo.y) { 
+					abiertos.clear();					
+					nodo_actual.hijo = nodo_objetivo;
+					
+				}else {//en caso contrario expando los nodos vecinos o sucesores
+					
+					//System.out.println("Coste cada paso: "+best_node.g+" + "+best_node.h+" = "+(best_node.g+best_node.h));
+					//System.out.println("Nodo Padre: "+best_node.hijo);
+					
+					//expand the nodes
+					lista_sucesores=expandNodes(best_node, stateObs);
+					best_node_expand = best_node;
+					
+					//recorro los sucesores validos (que no sean muros y esten dentro de las dimensiones del mapa)
+					for(Pair sucesor:lista_sucesores) {
+						
+						//si no es el nodo padre
+						if(best_node.padre.x != sucesor.key.x || best_node.padre.y != sucesor.key.y) {
+							//creo mi nodo personalizado pasandole el nodo padre, el nodo sucesor expandido, la orientacion de la casilla, g y h
+							Nodo new_node = new Nodo(best_node.hijo, sucesor.key, sucesor.value,0,calculateManhattan(sucesor.key, nodo_objetivo));
+								
+							//System.out.println("Padre: "+new_node.padre+", Hijo: "+new_node.hijo+", h= "+new_node.h);
+							//if the new node hasn't been explored
+							if(new_node.h < best_node.h)
+								abiertos.add(new_node);//adds it to the list of open nodes
+							
+						}
+					}
+					//System.out.println("Size abiertos: "+abiertos.size());
+				}
+				++cont;
+			}
+			
+			/*System.out.println("Ruta -----------------------------------");
+			for(Nodo n:cerrados)
+				System.out.println("Padre: "+n.padre+", Hijo: "+n.hijo);*/
+			
+			
+			camino.addAll(construirPath(cerrados,inicial_N,nodo_objetivo));
+			/*System.out.println(camino.size());
+			System.out.println(camino);*/
+			cerrados.clear();
+			//inicial_N = nodo_actual.clone();
+			
+			//System.out.println("Numero gemas: "+(cont_diamont+1));
+			
+			++cont_diamont;
+		}
+		ArrayList<String> camino_inverso = new ArrayList<String>();
+		for(int i = camino.size()-1; i>=0; --i) {
+			camino_inverso.add(camino.get(i));
+		}
+		//cerrados.add(portal);
+		//generaPathGreedy(cerrados, avatar);
+		
+		return camino_inverso;
 	}
 	
 	
@@ -159,13 +302,15 @@ public class myAgent extends AbstractPlayer{
 		Vector2d avatar =  new Vector2d(stateObs.getAvatarPosition().x / fescala.x, 
         		stateObs.getAvatarPosition().y / fescala.y);
 		
+		Nodo avatar_N = new Nodo(new Vector2d(-1, -1), avatar, orientacion_avatar, 0, calculateManhattan(avatar, portal));
+		
 		//obtengo la orientacion del avatar
 		orientacion_avatar = orientacion(stateObs);
 		
 		//System.out.println("Orientacion antes (izquierda): " + orientacion_avatar);
 		
 		//add the first node (the current position of avatar)
-		abiertos.add(new Nodo(new Vector2d(-1, -1), avatar, orientacion_avatar, 0, calculateManhattan(avatar)));
+		abiertos.add(avatar_N);
 		
 		//mientras no este vacio la lista de nodos explorados
 		while(!abiertos.isEmpty()) {
@@ -211,7 +356,7 @@ public class myAgent extends AbstractPlayer{
 				System.out.println("Coste: "+best_node.g);*/
 
 				//construyo el camino desde el portal al avatar y lo devuelvo
-				return construirPath(cerrados,avatar,portal);
+				return construirPath(cerrados,avatar_N,portal);
 			}else {//en caso contrario expando los nodos vecinos o sucesores
 				
 				/*System.out.println("Coste cada paso: "+best_node.g+" + "+best_node.h+" = "+(best_node.g+best_node.h));
@@ -226,7 +371,7 @@ public class myAgent extends AbstractPlayer{
 					//si no es el nodo padre
 					if(best_node.padre.x != sucesor.key.x || best_node.padre.y != sucesor.key.y) {
 						//creo mi nodo personalizado pasandole el nodo padre, el nodo sucesor expandido, la orientacion de la casilla, g y h
-						Nodo new_node = new Nodo(best_node.hijo, sucesor.key, sucesor.value,calculateG(best_node.g, sucesor.value, orientacion_avatar),calculateManhattan(sucesor.key));
+						Nodo new_node = new Nodo(best_node.hijo, sucesor.key, sucesor.value,calculateG(best_node.g, sucesor.value, orientacion_avatar),calculateManhattan(sucesor.key, portal));
 						
 						//busco si esta ese nodo en la lista de abiertos o en cerrados 
 						pos_abiertos = contiene(abiertos, new_node);
@@ -285,12 +430,13 @@ public class myAgent extends AbstractPlayer{
 	 * gets the Manhattan distance
 	 * @param current_node current node to calculate distance h 
 	 */
-	public Integer calculateManhattan(Vector2d current_node){
+	public Integer calculateManhattan(Vector2d current_node, Vector2d objetivo){
 		//Manhattan distance
         Integer distance = 0;        
         
         //calculate the Manhattan distance 
-        distance = ((int) (Math.abs(current_node.x - portal.x) + Math.abs(current_node.y-portal.y))); 
+        //distance = ((int) (Math.abs(current_node.x - portal.x) + Math.abs(current_node.y-portal.y)));
+        distance = ((int) (Math.abs(current_node.x - objetivo.x) + Math.abs(current_node.y-objetivo.y)));
         
         return distance;
         
@@ -503,7 +649,7 @@ public class myAgent extends AbstractPlayer{
 	 * @param objetivo obtengo el nodo objetivo (portal)
 	 * @return devuelvo el camino que realizara el avatar
 	 */
-	public ArrayList<String> construirPath(ArrayList<Nodo> lista_cerrados, Vector2d nodo_inicial, Vector2d objetivo){
+	public ArrayList<String> construirPath(ArrayList<Nodo> lista_cerrados, Nodo nodo_inicial, Vector2d objetivo){
 		ArrayList<String> pasos = new ArrayList<String>();//pasos del avatar
 		Nodo next_nodo = new Nodo();//guardo el siguiente nodo
 		next_nodo.hijo = objetivo;//guardo el nodo objetivo para buscar el padre de ese nodo
@@ -511,21 +657,24 @@ public class myAgent extends AbstractPlayer{
 		//System.out.println("Portal: "+objetivo);
 		
 		while(next_nodo.hijo.x != -1){//mientras no encuentre el nodo inicial (avatar)
-			//System.out.println("Padre: "+next_nodo.hijo);
+			//System.out.println("Hijo: "+next_nodo.hijo);
 			//recorre los nodos de la lista de cerrados
 			for(Nodo nod:lista_cerrados) {
-				//System.out.println("Nodos: "+nod.padre);
+				//System.out.println("Nodos: hijo "+nod.hijo+", padre "+nod.padre);
 				//si encuentra el hijo del nodo a buscar
 				if(nod.hijo.x == next_nodo.hijo.x && nod.hijo.y == next_nodo.hijo.y) {
-					//System.out.println("Padre: " + nod.padre + ", Hijo: "+nod.hijo);
+					/*System.out.println("Encontrado Padre: " + nod.padre + ", Hijo: "+nod.hijo);
+					System.out.println("Nodo Inicial Padre: " + nodo_inicial.padre + ", Hijo: "+nodo_inicial.hijo);*/
 					/**
 					 * si el nodo padre no es -1 quiere decir que hemos llegado al nodo inicial (avatar)
 					 * ya que las posiciones son positivas y una posición negativa quiere decir que no tiene padre.
 					 * Dicho de otro modo guardo las acciones que realizara salvo la de la casilla inicial
 					 */
-					if(nod.padre.x != -1)
+					if(nod.padre.x != nodo_inicial.padre.x || nod.padre.y != nodo_inicial.padre.y) {
+						//System.out.println("No es el inicio");
 						//añado el paso a realizar
 						pasos.add(orientacionCasilla(nod.padre,nod.hijo));
+					}
 					//guardo el padre del nodo hijo encontrado
 					next_nodo.hijo = nod.padre;
 					
@@ -593,7 +742,12 @@ class Nodo implements Comparable<Nodo>{
         } else {
                 return 0;
         }
-}
+	}
+	public Nodo clone() {
+		Nodo nodo = new Nodo(padre,hijo,orientacion,g,h);
+		
+		return nodo;
+	}
 };
 
 /**
